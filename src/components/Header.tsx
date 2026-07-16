@@ -46,13 +46,13 @@ export function Header() {
         </NavLink>
       </div>
 
-      <nav className="xl:hidden flex items-center gap-1 overflow-x-auto px-4 pb-2">
+      <nav className="xl:hidden grid grid-cols-3 gap-1 px-4 pb-2">
         {NAV_LINKS.map((link) => (
           <NavLink
             key={link.to}
             to={link.to}
             className={({ isActive }) =>
-              `px-3 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide whitespace-nowrap transition-colors ${
+              `px-2 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide whitespace-nowrap text-center transition-colors ${
                 isActive ? 'bg-court-400/15 text-court-400' : 'text-slate-300 hover:text-white hover:bg-slate-800'
               }`
             }

@@ -19,9 +19,9 @@ const STATUS_STYLES: Record<Match['status'], string> = {
 
 function TeamColumn({ team, isWinner }: { team: Team; isWinner: boolean }) {
   return (
-    <div className="w-32 shrink-0 flex flex-col items-center gap-2">
+    <div className="w-24 lg:w-32 shrink-0 flex flex-col items-center gap-2">
       <TeamLogo team={team} size="lg" />
-      <span className="text-sm font-bold uppercase text-white text-center leading-tight line-clamp-2 min-h-[2.5em]">
+      <span className="text-xs lg:text-sm font-bold uppercase text-white text-center leading-tight line-clamp-2 min-h-[2.5em]">
         {team.name}
       </span>
       <span className={`text-[11px] font-bold uppercase tracking-wide text-court-400 ${isWinner ? '' : 'invisible'}`}>
@@ -42,7 +42,7 @@ export function MatchRow({ match, teamA, teamB, showStage = true }: Props) {
   return (
     <Link
       to="/matches"
-      className="grid grid-cols-[minmax(9rem,1fr)_7rem_minmax(9rem,1fr)_8rem_10rem] items-center gap-4 py-5 border-b border-slate-800/70 hover:pl-1 transition-all"
+      className="grid grid-cols-[1fr_auto_1fr] lg:grid-cols-[minmax(9rem,1fr)_7rem_minmax(9rem,1fr)_8rem_10rem] items-center gap-2 lg:gap-4 py-5 border-b border-slate-800/70 hover:pl-1 transition-all"
     >
       <div className="justify-self-end">
         <TeamColumn team={teamA} isWinner={teamAWon} />
@@ -61,18 +61,20 @@ export function MatchRow({ match, teamA, teamB, showStage = true }: Props) {
         <TeamColumn team={teamB} isWinner={teamBWon} />
       </div>
 
-      {showStage ? (
-        <div className="flex flex-col items-center gap-1">
-          <span className="text-xs font-bold uppercase tracking-wide text-slate-300">{MATCH_STAGE_LABELS[match.stage]}</span>
-          {match.group && <span className="text-xs text-slate-500">Группа {match.group}</span>}
-        </div>
-      ) : (
-        <span />
-      )}
+      <div className="col-span-3 flex items-center justify-center gap-4 lg:contents">
+        {showStage ? (
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-300">{MATCH_STAGE_LABELS[match.stage]}</span>
+            {match.group && <span className="text-xs text-slate-500">Группа {match.group}</span>}
+          </div>
+        ) : (
+          <span className="hidden lg:block" />
+        )}
 
-      <span className={`text-xs px-3 py-1 font-bold uppercase tracking-wide whitespace-nowrap text-center w-full ${STATUS_STYLES[match.status]}`}>
-        {MATCH_STATUS_LABELS[match.status]}
-      </span>
+        <span className={`text-xs px-3 py-1 font-bold uppercase tracking-wide whitespace-nowrap text-center w-auto lg:w-full ${STATUS_STYLES[match.status]}`}>
+          {MATCH_STATUS_LABELS[match.status]}
+        </span>
+      </div>
     </Link>
   )
 }

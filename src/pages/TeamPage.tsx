@@ -88,12 +88,10 @@ export function TeamPage() {
         <section>
           <h2 className="text-xl font-black italic uppercase text-white mb-2">История матчей</h2>
           {teamMatches.length === 0 && <p className="text-slate-500 text-sm">Матчей ещё не было.</p>}
-          <div className="overflow-x-auto">
-            <div className="flex flex-col min-w-[600px]">
-              {teamMatches.map((m) => (
-                <MatchRow key={m.id} match={m} teamA={teamsMap.get(m.teamAId)} teamB={teamsMap.get(m.teamBId)} />
-              ))}
-            </div>
+          <div className="flex flex-col">
+            {teamMatches.map((m) => (
+              <MatchRow key={m.id} match={m} teamA={teamsMap.get(m.teamAId)} teamB={teamsMap.get(m.teamBId)} />
+            ))}
           </div>
         </section>
       </div>

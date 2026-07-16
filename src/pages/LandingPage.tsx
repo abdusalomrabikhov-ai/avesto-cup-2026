@@ -156,12 +156,10 @@ export function LandingPage() {
                 Всё расписание <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
-            <div className="overflow-x-auto">
-              <div className="flex flex-col min-w-[600px]">
-                {upcomingMatches.map((m) => (
-                  <MatchRow key={m.id} match={m} teamA={teamsMap.get(m.teamAId)} teamB={teamsMap.get(m.teamBId)} />
-                ))}
-              </div>
+            <div className="flex flex-col">
+              {upcomingMatches.map((m) => (
+                <MatchRow key={m.id} match={m} teamA={teamsMap.get(m.teamAId)} teamB={teamsMap.get(m.teamBId)} />
+              ))}
             </div>
           </div>
         </section>

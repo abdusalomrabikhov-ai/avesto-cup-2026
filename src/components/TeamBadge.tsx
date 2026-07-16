@@ -21,7 +21,7 @@ export function TeamBadge({ team, size = 'md', linkToTeam = true }: Props) {
   if (!linkToTeam) return content
 
   return (
-    <Link to={`/teams/${team.id}`} className="hover:text-court-400 transition-colors min-w-0">
+    <Link to={`/teams/${team.id}`} className="block hover:text-court-400 transition-colors min-w-0">
       {content}
     </Link>
   )

@@ -13,8 +13,8 @@ export function GroupTable({ group, rows }: Props) {
         <h2 className="font-black italic text-xl text-white">Группа {group}</h2>
         <span className="text-xs text-slate-500">Топ-2 в плей-офф</span>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm border-collapse min-w-[420px]">
+      <div>
+        <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="text-slate-500 text-[11px] uppercase tracking-wide">
               <th className="pb-2 text-left font-medium w-8"></th>
@@ -34,8 +34,8 @@ export function GroupTable({ group, rows }: Props) {
                 key={row.team.id}
                 className={`border-t border-slate-800/70 ${row.qualifiesForPlayoff ? 'border-l-2 border-l-court-400' : ''}`}
               >
-                <td className="py-3 pl-3 text-slate-500 tabular-nums text-xs">{idx + 1}</td>
-                <td className="py-3">
+                <td className="py-3 pl-2 sm:pl-3 text-slate-500 tabular-nums text-xs">{idx + 1}</td>
+                <td className="py-3 w-full max-w-0 pr-2">
                   <TeamBadge team={row.team} size="sm" />
                 </td>
                 <td className="py-3 text-center text-slate-400 tabular-nums">{row.played}</td>

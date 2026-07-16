@@ -103,11 +103,11 @@ export function MatchesPage() {
       <div className="pb-8">
         {groupedByDay.map(([date, matches], idx) => (
           <div key={date} className={idx % 2 === 0 ? 'bg-slate-800/50' : 'bg-transparent'}>
-            <div className="max-w-4xl mx-auto px-4 py-6 overflow-x-auto">
+            <div className="max-w-4xl mx-auto px-4 py-6">
               <h2 className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1 capitalize">
                 {formatDayHeading(date)}
               </h2>
-              <div className="flex flex-col min-w-[720px]">
+              <div className="flex flex-col">
                 {matches.map((m) => (
                   <MatchRow key={m.id} match={m} teamA={teamsMap.get(m.teamAId)} teamB={teamsMap.get(m.teamBId)} />
                 ))}
