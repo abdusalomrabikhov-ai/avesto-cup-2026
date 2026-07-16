@@ -28,6 +28,25 @@ await pool.query(`
 const app = express()
 app.use(express.json({ limit: '5mb' }))
 
+// CORS для /api/* — нужен только когда локальный dev-сервер (localhost:3002)
+// дёргает этот прод-API напрямую через VITE_API_URL. Разрешаем только localhost,
+// не '*' — иначе любой сторонний сайт смог бы дергать этот API из браузера пользователя
+const ALLOWED_ORIGINS = [/^http:\/\/localhost:\d+$/]
+
+app.use('/api', (req, res, next) => {
+  const origin = req.headers.origin
+  if (origin && ALLOWED_ORIGINS.some((re) => re.test(origin))) {
+    res.header('Access-Control-Allow-Origin', origin)
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS')
+  }
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(204)
+    return
+  }
+  next()
+})
+
 function requireAdmin(req, res, next) {
   const auth = req.headers.authorization ?? ''
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : null
