@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Montserrat", system-ui, sans-serif;
+
+  /* Единственный акцент турнира — приглушённый спортивный лайм, не кислотный */
+  --color-court-600: #6b8e2f;
+  --color-court-500: #8fb339;
+  --color-court-400: #a8cc4f;
+
+  --color-gold-400: #d9a441;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  /* Безопасные отступы под "остров"/чёлку и системные жесты по бокам (landscape на iPhone) */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Липкая шапка должна начинаться под "остров", а не наезжать на него */
+.site-header {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Нижний safe-area: используется там, где контент/кнопки стоят у самого низа экрана */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+h1, h2, h3 {
+  text-wrap: balance;
+}
+
+/* iOS Safari зумит страницу при фокусе на поле с font-size < 16px — принудительно
+   держим 16px на всех полях форм независимо от text-sm/text-xs в разметке админки */
+input, select, textarea {
+  font-size: 16px;
+}
+
+/* Фон hero: тихий радиальный свет от угла + едва заметная дуга площадки, без decorative filler-паттернов */
+.court-bg {
+  background-image:
+    radial-gradient(ellipse 1100px 600px at 100% -15%, color-mix(in oklab, var(--color-court-500) 13%, transparent), transparent),
+    radial-gradient(circle 480px at -10% 115%, color-mix(in oklab, var(--color-gold-400) 7%, transparent), transparent);
+}
+
+/* Появление цифры обратного отсчёта при каждой смене значения (ремоунт по key) */
+@keyframes countdown-tick {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.countdown-tick {
+  display: inline-block;
+  animation: countdown-tick 250ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .countdown-tick {
+    animation: none;
+  }
+}
