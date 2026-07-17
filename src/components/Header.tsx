@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Trophy, Shield } from 'lucide-react'
+import { Trophy } from 'lucide-react'
 
 const NAV_LINKS = [
   { to: '/teams', label: 'Команды' },
@@ -37,13 +37,6 @@ export function Header() {
           ))}
         </nav>
 
-        <NavLink
-          to="/admin"
-          className="flex items-center gap-1.5 text-sm font-medium text-slate-400 hover:text-white transition-colors shrink-0"
-        >
-          <Shield className="h-4 w-4" />
-          <span className="hidden sm:inline">Админ</span>
-        </NavLink>
       </div>
 
       <nav className="xl:hidden grid grid-cols-3 gap-1 px-4 pb-2">

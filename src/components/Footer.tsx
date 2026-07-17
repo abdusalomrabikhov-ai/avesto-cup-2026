@@ -11,7 +11,6 @@ const NAV_LINKS = [
 const INFO_LINKS = [
   { to: '/players', label: 'Бомбардиры' },
   { to: '/awards', label: 'Награды' },
-  { to: '/admin', label: 'Админ-панель' },
 ]
 
 export function Footer() {

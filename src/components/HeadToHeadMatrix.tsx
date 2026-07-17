@@ -31,34 +31,38 @@ function findResult(rowTeamId: string, colTeamId: string, matches: Match[]) {
 export function HeadToHeadMatrix({ teams, matches }: Props) {
   return (
     <div className="overflow-x-auto">
-      <table className="border-collapse">
+      <table className="w-full border-collapse border-hidden">
         <thead>
           <tr>
             <th className="w-16" />
             {teams.map((t) => (
-              <th key={t.id} className="px-3 pb-3">
-                <TeamLogo team={t} size="md" />
+              <th key={t.id} className="border border-slate-600 px-3 py-3">
+                <div className="flex justify-center">
+                  <TeamLogo team={t} size="md" />
+                </div>
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
           {teams.map((rowTeam) => (
-            <tr key={rowTeam.id} className="border-t border-slate-800/70">
-              <td className="pr-3 py-3">
-                <TeamLogo team={rowTeam} size="md" />
+            <tr key={rowTeam.id}>
+              <td className="border border-slate-600 px-3 py-3">
+                <div className="flex justify-center">
+                  <TeamLogo team={rowTeam} size="md" />
+                </div>
               </td>
               {teams.map((colTeam) => {
                 if (colTeam.id === rowTeam.id) {
                   return (
-                    <td key={colTeam.id} className="text-center text-slate-700 px-3 text-lg">
+                    <td key={colTeam.id} className="border border-slate-600 text-center text-slate-700 px-3 text-lg">
                       —
                     </td>
                   )
                 }
                 const result = findResult(rowTeam.id, colTeam.id, matches)
                 return (
-                  <td key={colTeam.id} className="text-center px-3 tabular-nums font-mono text-base">
+                  <td key={colTeam.id} className="border border-slate-600 text-center px-3 tabular-nums font-mono text-base">
                     {result ? (
                       <span className={`font-bold ${result.won ? 'text-court-400' : 'text-red-400'}`}>
                         {result.scoreOwn}:{result.scoreOpp}

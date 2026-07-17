@@ -22,8 +22,8 @@ export function GroupTable({ group, rows }: Props) {
               <th className="pb-2 px-1.5 sm:px-2.5 text-center font-medium">И</th>
               <th className="pb-2 px-1.5 sm:px-2.5 text-center font-medium">В</th>
               <th className="pb-2 px-1.5 sm:px-2.5 text-center font-medium">П</th>
-              <th className="pb-2 text-center font-medium hidden sm:table-cell">ЗО</th>
-              <th className="pb-2 text-center font-medium hidden sm:table-cell">ПО</th>
+              <th className="pb-2 px-2.5 text-center font-medium hidden sm:table-cell">ЗО</th>
+              <th className="pb-2 px-2.5 text-center font-medium hidden sm:table-cell">ПО</th>
               <th className="pb-2 px-1.5 sm:px-2.5 text-center font-medium">±</th>
               <th className="pb-2 pl-1.5 sm:pl-2.5 text-right font-medium">Очки</th>
             </tr>
@@ -34,15 +34,15 @@ export function GroupTable({ group, rows }: Props) {
                 key={row.team.id}
                 className={`border-t border-slate-800/70 ${row.qualifiesForPlayoff ? 'border-l-2 border-l-court-400' : ''}`}
               >
-                <td className="py-3 pl-2 sm:pl-3 text-slate-500 tabular-nums text-xs">{idx + 1}</td>
+                <td className="py-3 pl-2 sm:pl-3 pr-2.5 text-slate-500 tabular-nums text-xs">{idx + 1}</td>
                 <td className="py-3 w-full max-w-0 pr-2">
                   <TeamBadge team={row.team} size="sm" />
                 </td>
                 <td className="py-3 px-1.5 sm:px-2.5 text-center text-slate-400 tabular-nums">{row.played}</td>
                 <td className="py-3 px-1.5 sm:px-2.5 text-center text-slate-400 tabular-nums">{row.wins}</td>
                 <td className="py-3 px-1.5 sm:px-2.5 text-center text-slate-400 tabular-nums">{row.losses}</td>
-                <td className="py-3 text-center text-slate-500 tabular-nums hidden sm:table-cell">{row.scored}</td>
-                <td className="py-3 text-center text-slate-500 tabular-nums hidden sm:table-cell">{row.conceded}</td>
+                <td className="py-3 px-2.5 text-center text-slate-500 tabular-nums hidden sm:table-cell">{row.scored}</td>
+                <td className="py-3 px-2.5 text-center text-slate-500 tabular-nums hidden sm:table-cell">{row.conceded}</td>
                 <td
                   className={`py-3 px-1.5 sm:px-2.5 text-center tabular-nums font-medium ${row.diff > 0 ? 'text-court-400' : row.diff < 0 ? 'text-red-400' : 'text-slate-500'}`}
                 >

@@ -68,7 +68,7 @@ export function LandingPage() {
         />
         <div className="max-w-6xl mx-auto px-4 pt-24 pb-16 sm:pt-32 sm:pb-20 relative">
           <span className="text-sm font-semibold text-court-400">Корпоративный чемпионат ООО «Авесто Групп»</span>
-          <h1 className="text-6xl sm:text-8xl font-black uppercase italic tracking-tight text-white leading-[0.92] mt-4 max-w-3xl">
+          <h1 className="text-[2.6rem] sm:text-8xl font-black uppercase italic tracking-tight text-white leading-[0.92] mt-4 max-w-3xl">
             Кубок Авесто<span className="text-court-400">-2026</span>
           </h1>
           <p className="text-slate-400 text-lg max-w-xl mt-6 leading-relaxed">
@@ -95,7 +95,7 @@ export function LandingPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-x-10 gap-y-6 mt-16 pt-8 border-t border-slate-700">
-            <div>
+            <div className="pl-12 sm:pl-0">
               <span className="block text-2xl font-bold text-white tabular-nums">
                 <CountUp value={18} />
               </span>
