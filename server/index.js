@@ -4,7 +4,7 @@ import express from 'express'
 import pg from 'pg'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { scheduleDailyDigest } from './telegramNotify.js'
+import { scheduleDailyDigest, buildTodayText, sendTelegramMessage } from './telegramNotify.js'
 
 const { Pool } = pg
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -83,6 +83,31 @@ app.put('/api/data', requireAdmin, async (req, res) => {
     [req.body],
   )
   res.json(req.body)
+})
+
+// ВРЕМЕННО: ручная проверка Telegram-дайджеста для конкретной даты. Убрать после теста.
+app.post('/api/test-telegram-digest', requireAdmin, async (req, res) => {
+  const token = process.env.TELEGRAM_BOT_TOKEN
+  const chatId = process.env.TELEGRAM_CHAT_ID
+  if (!token || !chatId) {
+    res.status(500).json({ error: 'TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID не заданы' })
+    return
+  }
+  const { date } = req.body ?? {}
+  if (!date) {
+    res.status(400).json({ error: 'Нужна дата в body: { date: "2026-07-20" }' })
+    return
+  }
+  const result = await pool.query('SELECT data FROM tournament_data WHERE id = 1')
+  if (result.rows.length === 0) {
+    res.status(404).json({ error: 'Данные ещё не инициализированы' })
+    return
+  }
+  const text = buildTodayText(result.rows[0].data, date)
+  if (text) {
+    await sendTelegramMessage(token, chatId, text)
+  }
+  res.json({ sent: !!text, text })
 })
 
 app.post('/api/login', (req, res) => {

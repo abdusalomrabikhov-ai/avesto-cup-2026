@@ -157,4 +157,12 @@ function scheduleDailyDigest(pool) {
   }, 60_000)
 }
 
-export { scheduleDailyDigest, sendDailyDigest, buildResultsText, buildTodayText, buildScheduleText, dushanbeDateString }
+export {
+  scheduleDailyDigest,
+  sendDailyDigest,
+  sendTelegramMessage,
+  buildResultsText,
+  buildTodayText,
+  buildScheduleText,
+  dushanbeDateString,
+}
