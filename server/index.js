@@ -4,6 +4,7 @@ import express from 'express'
 import pg from 'pg'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { scheduleDailyDigest } from './telegramNotify.js'
 
 const { Pool } = pg
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -24,6 +25,15 @@ await pool.query(`
     data JSONB NOT NULL
   )
 `)
+
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS telegram_digest_log (
+    date DATE PRIMARY KEY,
+    sent_at TIMESTAMPTZ NOT NULL
+  )
+`)
+
+scheduleDailyDigest(pool)
 
 const app = express()
 app.use(express.json({ limit: '5mb' }))
