@@ -1,5 +1,6 @@
 // Ежедневный дайджест в Telegram-группу турнира: итоги вчерашних матчей +
-// анонс завтрашних. Раз в сутки в 10:00 по Душанбе (см. scheduleDailyDigest).
+// анонс завтрашних, двумя отдельными сообщениями. Раз в сутки в 10:00 по
+// Душанбе (см. scheduleDailyDigest).
 const STAGE_LABELS = {
   group: 'Групповой этап',
   quarterfinal: '1/4 финала',
@@ -8,12 +9,21 @@ const STAGE_LABELS = {
   final: 'Финал',
 }
 
+// Единственный зал турнира — тот же адрес, что в src/components/Footer.tsx
+const VENUE = 'СДЮШОР №5, ул. Дж. Расулова 41, г. Душанбе'
+
 const DUSHANBE_TZ = 'Asia/Dushanbe'
 
 // YYYY-MM-DD текущей даты в таймзоне Душанбе (не хостовой машины)
 function dushanbeDateString(offsetDays = 0) {
   const now = new Date(Date.now() + offsetDays * 86400000)
   return new Intl.DateTimeFormat('en-CA', { timeZone: DUSHANBE_TZ }).format(now)
+}
+
+// ДД.ММ.ГГГГ — тот же формат, что src/lib/formatDate.ts
+function formatDate(isoDate) {
+  const [y, m, d] = isoDate.split('-')
+  return `${d}.${m}.${y}`
 }
 
 function teamName(teams, id) {
@@ -31,31 +41,29 @@ function formatFinished(match, teams) {
   return `${a} ${match.scoreA} : ${match.scoreB} ${b} [${stage}]`
 }
 
-function formatScheduled(match, teams) {
-  const a = teamName(teams, match.teamAId)
-  const b = teamName(teams, match.teamBId)
-  const stage = STAGE_LABELS[match.stage] ?? match.stage
-  const time = match.time ? `, ${match.time}` : ''
-  return `${a} — ${b} [${stage}]${time}`
+function buildResultsText(data, yesterday) {
+  const finished = data.matches.filter((m) => m.date === yesterday && m.status !== 'scheduled')
+  if (finished.length === 0) return null
+  return (
+    `🏀 Итоги вчерашних матчей!\n📅 ${formatDate(yesterday)}\n\n` +
+    finished.map((m) => formatFinished(m, data.teams)).join('\n')
+  )
 }
 
-function buildDigestText(data, yesterday, tomorrow) {
-  const { matches, teams } = data
-  const finished = matches.filter((m) => m.date === yesterday && m.status !== 'scheduled')
-  const upcoming = matches.filter((m) => m.date === tomorrow && m.status === 'scheduled')
-
-  if (finished.length === 0 && upcoming.length === 0) {
-    return null
-  }
-
-  const parts = []
-  if (finished.length > 0) {
-    parts.push('<b>Итоги вчерашних матчей:</b>\n' + finished.map((m) => formatFinished(m, teams)).join('\n'))
-  }
-  if (upcoming.length > 0) {
-    parts.push('<b>Матчи завтра:</b>\n' + upcoming.map((m) => formatScheduled(m, teams)).join('\n'))
-  }
-  return parts.join('\n\n')
+function buildScheduleText(data, tomorrow) {
+  const upcoming = data.matches.filter((m) => m.date === tomorrow && m.status === 'scheduled')
+  if (upcoming.length === 0) return null
+  const lines = upcoming.map((m) => {
+    const a = teamName(data.teams, m.teamAId)
+    const b = teamName(data.teams, m.teamBId)
+    const time = m.time ?? '?'
+    return `🕐 ${time} — ${a} 🆚 ${b}`
+  })
+  return (
+    `🏀 Расписание предстоящих матчей турнира!\n📅 ${formatDate(tomorrow)}\n` +
+    lines.join('\n') +
+    `\n📍 Место проведения: ${VENUE}`
+  )
 }
 
 async function alreadySentToday(pool, today) {
@@ -75,7 +83,7 @@ async function sendTelegramMessage(token, chatId, text) {
   const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
+    body: JSON.stringify({ chat_id: chatId, text }),
   })
   if (!res.ok) {
     throw new Error(`Telegram API вернул ${res.status}: ${await res.text()}`)
@@ -95,12 +103,17 @@ async function sendDailyDigest(pool, { token, chatId }) {
 
   const yesterday = dushanbeDateString(-1)
   const tomorrow = dushanbeDateString(1)
-  const text = buildDigestText(result.rows[0].data, yesterday, tomorrow)
+  const data = result.rows[0].data
+  const resultsText = buildResultsText(data, yesterday)
+  const scheduleText = buildScheduleText(data, tomorrow)
 
   // Дня без матчей помечаем отправленным, чтобы не пересчитывать каждую минуту до полуночи
   await markSent(pool, today)
-  if (text) {
-    await sendTelegramMessage(token, chatId, text)
+  if (resultsText) {
+    await sendTelegramMessage(token, chatId, resultsText)
+  }
+  if (scheduleText) {
+    await sendTelegramMessage(token, chatId, scheduleText)
   }
 }
 
@@ -125,4 +138,4 @@ function scheduleDailyDigest(pool) {
   }, 60_000)
 }
 
-export { scheduleDailyDigest, sendDailyDigest, buildDigestText, dushanbeDateString }
+export { scheduleDailyDigest, sendDailyDigest, buildResultsText, buildScheduleText, dushanbeDateString }
