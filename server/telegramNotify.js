@@ -42,7 +42,9 @@ function formatFinished(match, teams) {
 }
 
 function buildResultsText(data, yesterday) {
-  const finished = data.matches.filter((m) => m.date === yesterday && m.status !== 'scheduled')
+  const finished = data.matches
+    .filter((m) => m.date === yesterday && m.status !== 'scheduled')
+    .sort((a, b) => (a.time ?? '').localeCompare(b.time ?? ''))
   if (finished.length === 0) return null
   return (
     `🏀 Итоги вчерашних матчей!\n📅 ${formatDate(yesterday)}\n\n` +
@@ -51,7 +53,9 @@ function buildResultsText(data, yesterday) {
 }
 
 function buildScheduleLines(data, date) {
-  const upcoming = data.matches.filter((m) => m.date === date && m.status === 'scheduled')
+  const upcoming = data.matches
+    .filter((m) => m.date === date && m.status === 'scheduled')
+    .sort((a, b) => (a.time ?? '').localeCompare(b.time ?? ''))
   if (upcoming.length === 0) return null
   return upcoming.map((m) => {
     const a = teamName(data.teams, m.teamAId)
