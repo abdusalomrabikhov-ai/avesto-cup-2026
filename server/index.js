@@ -4,7 +4,7 @@ import express from 'express'
 import pg from 'pg'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { scheduleDailyDigest } from './telegramNotify.js'
+import { scheduleDailyDigest, sendDailyDigest } from './telegramNotify.js'
 
 const { Pool } = pg
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -83,6 +83,22 @@ app.put('/api/data', requireAdmin, async (req, res) => {
     [req.body],
   )
   res.json(req.body)
+})
+
+// Временный роут: разовая пересылка дайджеста после правки времени матчей
+// вручную в админке (см. MEMORY.md, убрать после использования).
+app.post('/api/resend-telegram-digest', requireAdmin, async (req, res) => {
+  const token = process.env.TELEGRAM_BOT_TOKEN
+  const chatId = process.env.TELEGRAM_CHAT_ID
+  if (!token || !chatId) {
+    res.status(500).json({ error: 'TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID не заданы' })
+    return
+  }
+  await pool.query('DELETE FROM telegram_digest_log WHERE date = $1', [
+    new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Dushanbe' }).format(new Date()),
+  ])
+  await sendDailyDigest(pool, { token, chatId })
+  res.json({ ok: true })
 })
 
 app.post('/api/login', (req, res) => {
