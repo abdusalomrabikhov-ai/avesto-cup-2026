@@ -4,7 +4,7 @@ import express from 'express'
 import pg from 'pg'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { scheduleDailyDigest } from './telegramNotify.js'
+import { scheduleDailyDigest, sendTelegramMessage } from './telegramNotify.js'
 
 const { Pool } = pg
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -83,6 +83,29 @@ app.put('/api/data', requireAdmin, async (req, res) => {
     [req.body],
   )
   res.json(req.body)
+})
+
+// Временный роут: разовая рассылка про игры плей-офф. Удалить после использования.
+app.post('/api/send-playoff-announcement', requireAdmin, async (req, res) => {
+  const token = process.env.TELEGRAM_BOT_TOKEN
+  const chatId = process.env.TELEGRAM_CHAT_ID
+  if (!token || !chatId) {
+    res.status(500).json({ error: 'TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID не заданы' })
+    return
+  }
+  const text = `🏀 Сетка плей-офф — предстоящие игры!
+
+📅 28 июля
+🕐 19:00 — Зет-Мобайл 🆚 Муосир
+🕐 20:00 — Азот 🆚 Авесто Групп
+🕐 21:00 — Акиа Авесто 🆚 Душанбе Сити Банк
+🕐 22:00 — Артел Авесто 🆚 Неру
+
+Полуфиналы, финал и матч за 3-е место — по итогам 1/4 (даты и время объявим позже).
+
+📍 Место проведения: ул. Дж. Расулова 41, г. Душанбе`
+  await sendTelegramMessage(token, chatId, text)
+  res.json({ ok: true })
 })
 
 app.post('/api/login', (req, res) => {
