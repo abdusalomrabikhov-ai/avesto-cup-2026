@@ -43,8 +43,11 @@ export function BracketMatchCard({ slot, teams, label }: Props) {
   return (
     <div className="border border-slate-800 w-56 shrink-0">
       {label && (
-        <div className="px-3 py-1.5 bg-slate-900 text-[11px] font-bold uppercase tracking-wide text-slate-500">
-          {label}
+        <div className="px-3 py-1.5 bg-slate-900 flex items-center justify-between gap-2">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</span>
+          {slot.match?.time && (
+            <span className="text-[11px] font-semibold text-slate-500">{slot.match.time}</span>
+          )}
         </div>
       )}
       <SlotRow
