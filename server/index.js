@@ -1,6 +1,8 @@
 // Минимальный API-сервер: хранит весь TournamentData одной JSONB-строкой в Postgres,
 // отдаёт клиентам, и раздаёт собранную статику фронтенда с того же origin (без CORS).
 import express from 'express'
+import rateLimit from 'express-rate-limit'
+import helmet from 'helmet'
 import pg from 'pg'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -36,6 +38,31 @@ await pool.query(`
 scheduleDailyDigest(pool)
 
 const app = express()
+
+// Railway проксирует запросы — без этого req.ip вернёт IP прокси, одинаковый для
+// всех посетителей, и rate limit заблокирует вход сразу всем. Значение 1 (а не true):
+// доверяем только ближайшему прокси, иначе IP можно подделать заголовком X-Forwarded-For
+app.set('trust proxy', 1)
+
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        // base64-логотипы команд (src/data/logos.ts) — без data: они не отрисуются
+        imgSrc: ["'self'", 'data:'],
+        // Tailwind инжектит стили рантаймом
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        fontSrc: ["'self'", 'data:'],
+        // API на том же origin; Telegram зовётся с сервера, не из браузера
+        connectSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+      },
+    },
+  }),
+)
+
 app.use(express.json({ limit: '5mb' }))
 
 // CORS для /api/* — нужен только когда локальный dev-сервер (localhost:3002)
@@ -57,14 +84,37 @@ app.use('/api', (req, res, next) => {
   next()
 })
 
+// 5 попыток на IP за 15 минут. Успешные входы не считаем, чтобы админ,
+// часто перелогинивающийся во время турнира, не заблокировал сам себя
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Слишком много попыток входа. Попробуйте через 15 минут.' },
+})
+
 function requireAdmin(req, res, next) {
   const auth = req.headers.authorization ?? ''
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : null
   if (token !== ADMIN_PASSWORD) {
+    console.warn(`[auth] Неверный токен PUT /api/data, ip=${req.ip}, ${new Date().toISOString()}`)
     res.status(401).json({ error: 'Неверный пароль' })
     return
   }
   next()
+}
+
+// Клиентская валидация (src/lib/validate.ts) обходится одним curl — проверяем
+// форму документа на сервере, до записи. Только верхний уровень: цель — не дать
+// превратить документ в мусор, а не продублировать бизнес-правила
+function isValidTournamentData(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return false
+  const arrays = ['teams', 'players', 'matches', 'awards', 'drawLots']
+  if (!arrays.every((k) => Array.isArray(data[k]))) return false
+  if (!data.countdown || typeof data.countdown !== 'object') return false
+  return true
 }
 
 app.get('/api/data', async (req, res) => {
@@ -77,19 +127,25 @@ app.get('/api/data', async (req, res) => {
 })
 
 app.put('/api/data', requireAdmin, async (req, res) => {
+  if (!isValidTournamentData(req.body)) {
+    res.status(400).json({ error: 'Некорректная структура данных турнира' })
+    return
+  }
   await pool.query(
     `INSERT INTO tournament_data (id, data) VALUES (1, $1)
      ON CONFLICT (id) DO UPDATE SET data = $1`,
     [req.body],
   )
+  console.log(`[data] Турнир обновлён, ip=${req.ip}, ${new Date().toISOString()}`)
   res.json(req.body)
 })
 
-app.post('/api/login', (req, res) => {
+app.post('/api/login', loginLimiter, (req, res) => {
   const { password } = req.body ?? {}
   if (password === ADMIN_PASSWORD) {
     res.status(200).json({ ok: true })
   } else {
+    console.warn(`[auth] Неудачный вход, ip=${req.ip}, ${new Date().toISOString()}`)
     res.status(401).json({ ok: false })
   }
 })

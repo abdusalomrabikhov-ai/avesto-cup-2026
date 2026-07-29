@@ -203,6 +203,25 @@ copy(JSON.stringify(JSON.parse(localStorage.getItem('avesto-2026-tournament-data
 
 (новые записи сверху)
 
+- 2026-07-29 — **фиксы безопасности по аудиту.** `server/index.js`: rate limit
+  на `POST /api/login` (5 попыток / 15 мин на IP, `skipSuccessfulRequests` —
+  иначе админ блокирует сам себя частым перелогином); `app.set('trust proxy', 1)`
+  — **обязательно**, Railway проксирует запросы, без этого `req.ip` вернёт IP
+  прокси и лимит заблокирует всех разом (значение `1`, не `true`: `true`
+  позволяет подделать IP заголовком `X-Forwarded-For`); `helmet()` с **явным**
+  CSP — дефолтный запрещает `data:` в `img-src` и убил бы все 17 base64-логотипов
+  из `src/data/logos.ts`; серверная валидация формы документа в `PUT /api/data`
+  (клиентская `src/lib/validate.ts` обходится одним curl, `PUT {}` клал фронт
+  всем посетителям); логирование неудачных входов и записей данных (пароль в
+  логи не пишется). Клиент: `useAdminAuth.ts` — TTL сессии 8 часов, новый
+  экспорт `readAuth()`, формат sessionStorage сменился на
+  `{password, expires}`; `store.ts` переведён на `readAuth()` — **эти две
+  правки неразделимы**, иначе `saveData` шлёт JSON-обёртку как Bearer и
+  сохранение падает с 401. `try/catch` в `readAuth` обязателен: в браузерах уже
+  лежат записи в старом формате (просто строка). Тесты `src/test/adminAuth.test.ts`.
+  Отложено: M-2 timingSafeEqual, M-3 хеш пароля (при появлении 2-го админа).
+  **Не трогать `npm audit fix --force`** — 2 high в `react-router` относятся к
+  RSC mode, у нас `BrowserRouter`, форс откатит до 7.11.0 и сломает роутинг.
 - 2026-07-27 — разовая Telegram-рассылка анонса 4 матчей 1/4 финала (28 июля,
   19:00–22:00) в группу турнира. Временный роут `POST
   /api/send-playoff-announcement` в `server/index.js` (по образцу прошлых

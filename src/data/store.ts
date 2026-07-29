@@ -1,10 +1,10 @@
 // Хранилище турнира: общий бэкенд на Railway (Express + Postgres), не localStorage —
 // все клиенты читают/пишут один и тот же документ через /api/data
 import { buildGroupSchedule, buildSeedData } from './seed'
+import { readAuth } from '../hooks/useAdminAuth'
 import type { TournamentData } from '../types'
 
 const API_URL = import.meta.env.VITE_API_URL ?? ''
-const AUTH_KEY = 'avesto-admin-auth'
 
 export async function loadData(): Promise<TournamentData> {
   const res = await fetch(`${API_URL}/api/data`)
@@ -22,7 +22,7 @@ export async function loadData(): Promise<TournamentData> {
 // Бросает исключение, если сервер отклонил сохранение (неверный пароль, сеть недоступна) —
 // вызывающий код должен показать это пользователю, а не дать ошибке уйти в необработанный useEffect
 export async function saveData(data: TournamentData): Promise<void> {
-  const password = sessionStorage.getItem(AUTH_KEY)
+  const password = readAuth()
   const res = await fetch(`${API_URL}/api/data`, {
     method: 'PUT',
     headers: {
