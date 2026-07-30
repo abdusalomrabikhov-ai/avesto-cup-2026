@@ -203,6 +203,14 @@ copy(JSON.stringify(JSON.parse(localStorage.getItem('avesto-2026-tournament-data
 
 (новые записи сверху)
 
+- 2026-07-31 — **noindex для админки задеплоен** (коммит `95ba285`), закрывает
+  висевший с 29.07 хвост из записи ниже. Три слоя: `public/robots.txt`,
+  заголовок `X-Robots-Tag: noindex, nofollow` на `/admin*` в `server/index.js`
+  и `<meta name="robots">` в `AdminLayout.tsx` (стоит и на странице логина, до
+  проверки `isAuthed`). Метку Safe Browsing это само по себе не снимает —
+  см. запись от 29.07, лечится своим доменом.
+- 2026-07-31 — Убрана подпись «Назначаются оргкомитетом в админ-панели.» с
+  `src/pages/AwardsPage.tsx` — служебная деталь, посетителям не нужна.
 - 2026-07-29 — **Safe Browsing пометил прод как «Опасный сайт»; noindex для
   админки написан, но НЕ задеплоен.** Проверка через внутренний JSON-эндпоинт
   Transparency Report (`/transparencyreport/api/v3/safebrowsing/status?site=`,
