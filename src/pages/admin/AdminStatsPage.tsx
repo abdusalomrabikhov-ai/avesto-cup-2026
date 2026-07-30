@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
-import { loadStats } from '../../data/store'
+import { useCallback, useEffect, useState } from 'react'
+import { loadStats, resetStats } from '../../data/store'
 import type { VisitStats } from '../../data/store'
+import { useConfirm } from '../../hooks/useConfirm'
 
 const PAGE_LABELS: Record<string, string> = {
   '/': 'Главная',
@@ -20,12 +21,31 @@ const formatDay = (date: string) =>
 export function AdminStatsPage() {
   const [stats, setStats] = useState<VisitStats | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const confirm = useConfirm()
 
-  useEffect(() => {
+  const refresh = useCallback(() => {
     loadStats()
       .then(setStats)
       .catch((e: Error) => setError(e.message))
   }, [])
+
+  useEffect(refresh, [refresh])
+
+  const handleReset = async () => {
+    const ok = await confirm({
+      title: 'Сбросить статистику посещаемости?',
+      description:
+        'Все накопленные данные о посещениях будут удалены безвозвратно: счётчики обнулятся и начнут считаться заново. На данные турнира это не влияет.',
+      confirmLabel: 'Сбросить',
+    })
+    if (!ok) return
+    try {
+      await resetStats()
+      refresh()
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
 
   if (error) return <p className="text-sm text-red-400">{error}</p>
   if (!stats) return <p className="text-sm text-slate-400">Загрузка статистики…</p>
@@ -103,6 +123,21 @@ export function AdminStatsPage() {
         Считаются устройства, а не люди: один человек с телефона и ноутбука — два уникальных посетителя. Заходы в
         админку не учитываются.
       </p>
+
+      <h2 className="text-xl font-bold text-white mb-4 mt-10">Сброс</h2>
+      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 flex flex-col gap-3">
+        <p className="text-sm text-slate-400">
+          Обнулить счётчики и начать подсчёт заново — например, чтобы убрать тестовые заходы перед стартом турнира.
+          Данные турнира не затрагиваются.
+        </p>
+        <button
+          type="button"
+          onClick={handleReset}
+          className="self-start px-3 py-2 text-sm font-semibold rounded-md border border-slate-800 text-slate-300 hover:border-red-400 hover:text-red-400 transition-colors"
+        >
+          Сбросить статистику
+        </button>
+      </div>
     </div>
   )
 }

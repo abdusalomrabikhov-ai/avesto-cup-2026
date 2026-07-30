@@ -152,7 +152,11 @@ async function recordVisit(req, rawPath) {
   const path = typeof rawPath === 'string' && /^\/[a-z0-9/:-]{0,40}$/i.test(rawPath) ? rawPath : '/'
   try {
     await pool.query(
-      `INSERT INTO visit_log (date, visitor_hash, path) VALUES (CURRENT_DATE, $1, $2)
+      // Дата в поясе турнира, не в UTC: контейнер Railway живёт по UTC, и с 19:00
+      // до полуночи по Душанбе (UTC+5) визиты уходили бы во вчерашнюю строку —
+      // как раз в вечерний пик посещаемости
+      `INSERT INTO visit_log (date, visitor_hash, path)
+       VALUES ((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Dushanbe')::date, $1, $2)
        ON CONFLICT (date, visitor_hash, path) DO UPDATE SET hits = visit_log.hits + 1`,
       [visitorHash(req), path],
     )
@@ -182,6 +186,14 @@ app.get('/api/stats', requireAdmin, async (req, res) => {
     ),
   ])
   res.json({ total: totals.rows[0], daily: daily.rows, pages: pages.rows })
+})
+
+// Сброс счётчика — чтобы обнулить тестовые заходы перед турниром.
+// Необратимо: агрегат по дням восстановить неоткуда, сырых визитов не храним
+app.delete('/api/stats', requireAdmin, async (req, res) => {
+  await pool.query('DELETE FROM visit_log')
+  console.log(`[stats] Статистика сброшена, ip=${req.ip}, ${new Date().toISOString()}`)
+  res.sendStatus(204)
 })
 
 app.get('/api/data', async (req, res) => {

@@ -64,6 +64,17 @@ export async function loadStats(): Promise<VisitStats> {
   return (await res.json()) as VisitStats
 }
 
+export async function resetStats(): Promise<void> {
+  const password = readAuth()
+  const res = await fetch(`${API_URL}/api/stats`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${password ?? ''}` },
+  })
+  if (!res.ok) {
+    throw new Error('Не удалось сбросить статистику. Попробуйте войти в админку заново.')
+  }
+}
+
 export function resetToSeed(): TournamentData {
   return buildSeedData()
 }
