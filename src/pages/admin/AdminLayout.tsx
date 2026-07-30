@@ -10,6 +10,7 @@ const ADMIN_LINKS = [
   { to: '/admin/matches', label: 'Матчи' },
   { to: '/admin/awards', label: 'Награды' },
   { to: '/admin/settings', label: 'Настройки' },
+  { to: '/admin/stats', label: 'Статистика' },
 ]
 
 // Дублирует X-Robots-Tag с сервера — для краулеров, которые исполняют JS.

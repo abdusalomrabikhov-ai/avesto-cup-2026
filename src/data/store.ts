@@ -36,6 +36,34 @@ export async function saveData(data: TournamentData): Promise<void> {
   }
 }
 
+// Счётчик посещений. Ошибки глушим: аналитика не должна ломать страницу,
+// keepalive — чтобы пинг долетел, если пользователь сразу уходит со страницы
+export function trackVisit(path: string): void {
+  fetch(`${API_URL}/api/visit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path }),
+    keepalive: true,
+  }).catch(() => {})
+}
+
+export type VisitStats = {
+  total: { visitors: number; hits: number }
+  daily: { date: string; visitors: number; hits: number }[]
+  pages: { path: string; visitors: number; hits: number }[]
+}
+
+export async function loadStats(): Promise<VisitStats> {
+  const password = readAuth()
+  const res = await fetch(`${API_URL}/api/stats`, {
+    headers: { Authorization: `Bearer ${password ?? ''}` },
+  })
+  if (!res.ok) {
+    throw new Error('Не удалось загрузить статистику. Попробуйте войти в админку заново.')
+  }
+  return (await res.json()) as VisitStats
+}
+
 export function resetToSeed(): TournamentData {
   return buildSeedData()
 }

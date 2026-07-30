@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit'
 import helmet from 'helmet'
 import pg from 'pg'
 import path from 'node:path'
+import crypto from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { scheduleDailyDigest } from './telegramNotify.js'
 
@@ -32,6 +33,20 @@ await pool.query(`
   CREATE TABLE IF NOT EXISTS telegram_digest_log (
     date DATE PRIMARY KEY,
     sent_at TIMESTAMPTZ NOT NULL
+  )
+`)
+
+// Счётчик посещений. Храним не сырые визиты, а сразу агрегат по дню:
+// строк максимум (дней × страниц), таблица не растёт бесконечно и не нужна чистка.
+// visitor_hash — SHA-256 от IP+UA+соли, не обратимый в IP: считаем «сколько
+// устройств», не «кто именно». Уникальность внутри дня, не за всё время
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS visit_log (
+    date DATE NOT NULL,
+    visitor_hash TEXT NOT NULL,
+    path TEXT NOT NULL,
+    hits INT NOT NULL DEFAULT 1,
+    PRIMARY KEY (date, visitor_hash, path)
   )
 `)
 
@@ -116,6 +131,58 @@ function isValidTournamentData(data) {
   if (!data.countdown || typeof data.countdown !== 'object') return false
   return true
 }
+
+// Соль делает хеш неподбираемым: без неё диапазон IPv4 перебирается за секунды
+// и hash превращается обратно в IP. При отсутствии env-переменной генерим
+// случайную на старте — тогда хеши живут до перезапуска, статистика уникальных
+// «рвётся» на деплое, но приватность не страдает
+const VISIT_SALT = process.env.VISIT_SALT ?? crypto.randomBytes(32).toString('hex')
+
+function visitorHash(req) {
+  return crypto
+    .createHash('sha256')
+    .update(`${req.ip}|${req.headers['user-agent'] ?? ''}|${VISIT_SALT}`)
+    .digest('hex')
+}
+
+// Счёт не должен ломать выдачу данных: ошибка записи логируется и глотается
+async function recordVisit(req, rawPath) {
+  // Нормализуем: только известные разделы, иначе мусорный путь из адресной
+  // строки создаст строку в таблице (и это вектор на раздувание базы)
+  const path = typeof rawPath === 'string' && /^\/[a-z0-9/:-]{0,40}$/i.test(rawPath) ? rawPath : '/'
+  try {
+    await pool.query(
+      `INSERT INTO visit_log (date, visitor_hash, path) VALUES (CURRENT_DATE, $1, $2)
+       ON CONFLICT (date, visitor_hash, path) DO UPDATE SET hits = visit_log.hits + 1`,
+      [visitorHash(req), path],
+    )
+  } catch (err) {
+    console.warn(`[stats] Не удалось записать визит: ${err.message}`)
+  }
+}
+
+// Пинг со смены роута во фронтенде. 204 без тела — ответ клиенту не нужен
+app.post('/api/visit', async (req, res) => {
+  await recordVisit(req, req.body?.path)
+  res.sendStatus(204)
+})
+
+app.get('/api/stats', requireAdmin, async (req, res) => {
+  const [totals, daily, pages] = await Promise.all([
+    // Уникальные за всё время считаем по distinct хешу, а не суммой дневных:
+    // вернувшийся посетитель не должен считаться дважды
+    pool.query(`SELECT COUNT(DISTINCT visitor_hash)::int AS visitors, COALESCE(SUM(hits), 0)::int AS hits FROM visit_log`),
+    pool.query(
+      `SELECT date, COUNT(DISTINCT visitor_hash)::int AS visitors, SUM(hits)::int AS hits
+       FROM visit_log GROUP BY date ORDER BY date DESC LIMIT 30`,
+    ),
+    pool.query(
+      `SELECT path, COUNT(DISTINCT visitor_hash)::int AS visitors, SUM(hits)::int AS hits
+       FROM visit_log GROUP BY path ORDER BY hits DESC LIMIT 20`,
+    ),
+  ])
+  res.json({ total: totals.rows[0], daily: daily.rows, pages: pages.rows })
+})
 
 app.get('/api/data', async (req, res) => {
   const result = await pool.query('SELECT data FROM tournament_data WHERE id = 1')

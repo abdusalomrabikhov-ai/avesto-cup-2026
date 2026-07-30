@@ -20,6 +20,8 @@ import { AdminMatchesPage } from './pages/admin/AdminMatchesPage'
 import { AdminMatchResultPage } from './pages/admin/AdminMatchResultPage'
 import { AdminAwardsPage } from './pages/admin/AdminAwardsPage'
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage'
+import { AdminStatsPage } from './pages/admin/AdminStatsPage'
+import { TrackVisit } from './components/TrackVisit'
 
 function PublicLayout({ children }: { children: ReactNode }) {
   return (
@@ -36,6 +38,7 @@ function App() {
     <TournamentProvider>
       <BrowserRouter>
         <ScrollToTop />
+        <TrackVisit />
         <Routes>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="/admin/teams" replace />} />
@@ -45,6 +48,7 @@ function App() {
             <Route path="matches/:matchId" element={<AdminMatchResultPage />} />
             <Route path="awards" element={<AdminAwardsPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
+            <Route path="stats" element={<AdminStatsPage />} />
           </Route>
           <Route
             path="/*"
