@@ -12,14 +12,28 @@ const ADMIN_LINKS = [
   { to: '/admin/settings', label: 'Настройки' },
 ]
 
+// Дублирует X-Robots-Tag с сервера — для краулеров, которые исполняют JS.
+// React 19 сам поднимает <meta> в <head>, отдельная библиотека не нужна
+function NoIndex() {
+  return <meta name="robots" content="noindex, nofollow" />
+}
+
 export function AdminLayout() {
   const { isAuthed, login, logout } = useAdminAuth()
 
-  if (!isAuthed) return <AdminLoginPage login={login} />
+  // До проверки isAuthed — чтобы тег стоял и на странице логина
+  if (!isAuthed)
+    return (
+      <>
+        <NoIndex />
+        <AdminLoginPage login={login} />
+      </>
+    )
 
   return (
     <ToastProvider>
     <ConfirmProvider>
+      <NoIndex />
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <nav className="flex items-center gap-1">

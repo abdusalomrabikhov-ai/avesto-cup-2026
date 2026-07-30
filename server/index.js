@@ -152,6 +152,15 @@ app.post('/api/login', loginLimiter, (req, res) => {
 
 const distPath = path.join(__dirname, '../dist')
 app.use(express.static(distPath))
+
+// Админка не должна попадать в поисковый индекс: форма пароля на публично
+// доступном URL — типовой триггер эвристик Safe Browsing. Заголовок надёжнее
+// <meta> в SPA: краулер видит его сразу, не исполняя JS
+app.get(/^\/admin(\/|$)/, (req, res, next) => {
+  res.set('X-Robots-Tag', 'noindex, nofollow')
+  next()
+})
+
 app.get(/^(?!\/api\/).*/, (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'))
 })

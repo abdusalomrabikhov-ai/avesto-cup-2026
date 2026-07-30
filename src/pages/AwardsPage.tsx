@@ -13,7 +13,6 @@ export function AwardsPage() {
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="mb-10">
         <h1 className="text-4xl font-black italic uppercase text-white">Индивидуальные номинации</h1>
-        <p className="text-slate-500 text-sm mt-2">Назначаются оргкомитетом в админ-панели.</p>
       </div>
 
       <div className="flex flex-col gap-8">

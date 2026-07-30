@@ -203,6 +203,26 @@ copy(JSON.stringify(JSON.parse(localStorage.getItem('avesto-2026-tournament-data
 
 (новые записи сверху)
 
+- 2026-07-29 — **Safe Browsing пометил прод как «Опасный сайт»; noindex для
+  админки написан, но НЕ задеплоен.** Проверка через внутренний JSON-эндпоинт
+  Transparency Report (`/transparencyreport/api/v3/safebrowsing/status?site=`,
+  ответ с префиксом `)]}'`, код `3` = опасный, `4` = чисто — калибровал по
+  google.com и malware.testing.google.test): помечен **именно наш поддомен**
+  `avesto-cup-2026-production.up.railway.app`, а родительский `up.railway.app`
+  чист. Первая гипотеза «страдаем от репутации соседей по общему домену»
+  **опровергнута** — не повторять её. Метка появилась 29.07 в 00:57, за ~16 ч
+  до деплоя фиксов, т.е. с ними не связана. Взлом исключён: прод-бандл собран
+  из репозитория, единственный внешний домен — `yandex.tj` (наша же ссылка на
+  карту зала в `Footer.tsx`), эксфильтрации/майнеров/редиректов нет. Вероятная
+  причина — эвристика на форму `type="password"` на бесплатном поддомене с
+  нулевой репутацией. **Не закоммичено:** `public/robots.txt`,
+  `X-Robots-Tag: noindex, nofollow` на `/admin` в `server/index.js` (regex
+  `^\/admin(\/|$)` — проверено, что `/administrator` не задевает), `<meta>`
+  через компонент `NoIndex` в `AdminLayout.tsx` (React 19 сам поднимает meta в
+  head, `react-helmet` не нужен). **Решает проблему только свой домен** —
+  на бесплатном поддомене метка вернётся и после успешной апелляции; noindex
+  это профилактика, метку он не снимает. Порядок: домен → апелляция в Search
+  Console → деплой noindex.
 - 2026-07-29 — **фиксы безопасности по аудиту.** `server/index.js`: rate limit
   на `POST /api/login` (5 попыток / 15 мин на IP, `skipSuccessfulRequests` —
   иначе админ блокирует сам себя частым перелогином); `app.set('trust proxy', 1)`
